@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>Hosttail — ลงทะเบียนรับประกันสินค้า</title>
+  <link rel="icon" href="guide-img-1.png" type="image/png" />
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -23,13 +25,25 @@
     }
     .header-logo {
       font-size: 2.6rem; font-weight: 900; letter-spacing: 3px;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
     }
-    .header-logo-img { height: 2.4rem; width: auto; object-fit: contain; vertical-align: middle; }
-    .header-sub  { font-size: 0.85rem; letter-spacing: 4px; opacity: 0.9; margin-top: 2px; }
+    .header-logo-circle {
+      background: white;
+      border-radius: 50%;
+      width: 14rem;
+      height: 14rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+    }
+    .header-logo-img { height: 12rem; width: auto; object-fit: contain; display: block; margin: 0 auto; }
+    .header-sub  { font-size: 0.85rem; letter-spacing: 4px; opacity: 0.9; color: white; margin-top: 2px; }
     .header-title {
       margin-top: 12px; font-size: 1rem;
       background: rgba(255,255,255,0.18);
+      color: white;
       display: inline-block; padding: 5px 18px; border-radius: 20px;
     }
 
@@ -110,9 +124,10 @@
     }
     .guide-steps li::before { content: '→'; color: #ff6b35; flex-shrink: 0; }
     .guide-logo-img {
-      display: block; width: 100%; max-width: 320px; margin: 0 auto;
-      object-fit: contain;
+      display: block; width: 100%; max-width: 100%; margin: 0 auto;
+      object-fit: contain; border-radius: 10px;
     }
+    .guide-logo-img + .guide-logo-img { margin-top: 16px; }
 
     /* ─── Store note ─── */
     .store-note {
@@ -157,20 +172,18 @@
     .pet-option input:checked + .pet-box { background: #fff8f0; border-color: #ff6b35; }
     .pet-option input:checked + .pet-box .pet-name { color: #ff6b35; }
 
-    /* ─── Receipt image upload ─── */
-    .upload-area {
-      border: 2px dashed #ffb380; border-radius: 12px; padding: 16px; text-align: center;
-      cursor: pointer; transition: background 0.2s; background: #fffaf7;
+    /* ─── Pet other input ─── */
+    .pet-other-input {
+      margin-top: 10px;
+      display: none;
     }
-    .upload-area:hover { background: #fff3e8; }
-    .upload-area input[type="file"] { display: none; }
-    .upload-icon { font-size: 1.8rem; margin-bottom: 4px; }
-    .upload-text { font-size: 0.78rem; color: #888; }
-    .upload-text strong { color: #ff6b35; }
-    .upload-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-    .upload-preview img {
-      width: 70px; height: 70px; object-fit: cover; border-radius: 8px; border: 1px solid #eee;
+    .pet-other-input.visible { display: block; }
+    .pet-other-input input {
+      width: 100%; border: 1.5px solid #e0e0e0; border-radius: 10px;
+      padding: 11px 13px; font-size: 0.9rem; font-family: inherit;
+      outline: none; transition: border-color 0.2s; background: #fafafa; color: #2d2d2d;
     }
+    .pet-other-input input:focus { border-color: #ff6b35; background: white; }
 
     /* ─── Submit ─── */
     .submit-btn {
@@ -203,21 +216,32 @@
     .field.has-error .field-error { display: block; }
     .divider { height: 1px; background: #f0f0f0; margin: 20px 0; }
 
-    /* pet-other-input */
-    .pet-other-input { margin-top: 10px; display: none; }
-    .pet-other-input.visible { display: block; }
-    .pet-other-input input { width: 100%; border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 11px 13px; font-size: 0.9rem; font-family: inherit; outline: none; transition: border-color 0.2s; background: #fafafa; color: #2d2d2d; }
-    .pet-other-input input:focus { border-color: #ff6b35; background: white; }
+    /* ─── Mobile tuning ─── */
+    @media (max-width: 480px) {
+      .header { padding: 22px 14px 18px; }
+      .header-logo { font-size: 2.1rem; }
+      .header-logo-circle { width: 11rem; height: 11rem; }
+      .header-logo-img { height: 10rem; }
+      .user-card { margin: 14px 10px 0; padding: 12px 14px; }
+      .form-wrap { margin: 12px 10px 24px; padding: 18px 12px; border-radius: 14px; }
+      .section-title { font-size: 0.78rem; margin-bottom: 14px; }
+      .guide-box { padding: 10px; border-radius: 12px; margin-bottom: 14px; }
+      .guide-box-title { font-size: 0.92rem; }
+      .guide-logo-img { border-radius: 8px; }
+    }
+    @media (max-width: 360px) {
+      .form-wrap { margin: 10px 6px 20px; padding: 14px 8px; }
+      .guide-box { padding: 6px; }
+      .header-logo-circle { width: 9.5rem; height: 9.5rem; }
+      .header-logo-img { height: 8.5rem; }
+    }
   </style>
-
-  <!-- LINE LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
 
 <!-- Header -->
 <div class="header">
-  <div class="header-logo"><img class="header-logo-img" src="guide-img-1.png" alt="HostTail logo" /> HOSTTAIL</div>
+  <div class="header-logo"><div class="header-logo-circle"><img class="header-logo-img" src="guide-img-1.png" alt="HostTail logo" /></div></div>
   <div class="header-sub">PET VARIETY STORE</div>
   <div class="header-title">🛡️ ลงทะเบียนรับประกันสินค้า</div>
 </div>
@@ -264,8 +288,8 @@
 
   <!-- Guide box -->
   <div class="guide-box">
-    <img class="guide-logo-img" src="guide-img-2.png" alt="วิธีค้นหาเลขคำสั่งซื้อ Shopee Lazada TikTok" />
-    <img class="guide-logo-img" src="guide-img-3.png" alt="วิธีค้นหาเลขคำสั่งซื้อ HomePro ใบเสร็จ" />
+    <img class="guide-logo-img" src="guide-img-2.jpg" alt="วิธีค้นหาเลขคำสั่งซื้อ" />
+    <img class="guide-logo-img" src="guide-img-3.jpg" alt="วิธีค้นหาเลขที่ใบเสร็จ HomePro" />
   </div>
 
   <!-- Store note -->
@@ -290,17 +314,6 @@
     </div>
     <input type="text" id="fOrderId" placeholder="กรอกหมายเลขคำสั่งซื้อ" />
     <div class="field-error">กรุณากรอกหมายเลขคำสั่งซื้อหรือเลขที่ใบเสร็จ</div>
-  </div>
-
-  <!-- Receipt image -->
-  <div class="field" id="field-receipt-img">
-    <label>📸 รูปใบเสร็จการซื้อสินค้า <span style="font-size:0.75rem;color:#888">(ไม่บังคับ — แนะนำสำหรับซื้อหน้าร้าน)</span></label>
-    <div class="upload-area" onclick="document.getElementById('receiptImgInput').click()">
-      <input type="file" id="receiptImgInput" accept="image/*" multiple onchange="previewImages(this,'receiptPreview')" />
-      <div class="upload-icon">🧾</div>
-      <div class="upload-text">แตะเพื่อเลือกรูปใบเสร็จ<br/><strong>รองรับ JPG, PNG</strong></div>
-    </div>
-    <div class="upload-preview" id="receiptPreview"></div>
   </div>
 
   <div class="divider"></div>
@@ -391,16 +404,15 @@
 </div>
 
 <script>
-  /* ════════════════════════════════════════════
+  /* ─────────────────────────────────────────
      ⚙️  CONFIG — แก้ไขค่านี้เท่านั้น
-     ════════════════════════════════════════════ */
+  ───────────────────────────────────────── */
   const CONFIG = {
     LIFF_ID: "2010446478-ZHkvLlTS",
     GAS_URL: "https://script.google.com/macros/s/AKfycbyDXHef0Zlq5K8Gi8QIxG4TcVN9Jr4Ajcl-wkrKweo0NvB-Q13wF7BhTZ4AeGepIUdApA/exec",
   };
-  /* ════════════════════════════════════════════ */
 
-  let lineProfile = null;
+  let lineProfile  = null;
   let receiptBase64 = [];
 
   /* ── Order type tabs ── */
@@ -421,35 +433,12 @@
     makropro: 'เช่น INV-2025-00123',
     receipt:  'เช่น INV-2025-00123',
   };
-
   function setOrderType(type) {
     currentOrderType = type;
     document.querySelectorAll('.order-tab').forEach(t => t.classList.remove('active'));
     document.querySelector('.order-tab.' + type).classList.add('active');
     document.getElementById('orderIdLabel').innerHTML = orderLabels[type] + ' <span class="req">*</span>';
     document.getElementById('fOrderId').placeholder = orderPlaceholders[type];
-    // Show/hide receipt upload only for receipt type
-    const receiptField = document.getElementById('field-receipt-img');
-    if (receiptField) {
-      receiptField.style.display = (type === 'receipt') ? 'block' : 'none';
-    }
-  }
-
-  /* ── Image preview + base64 capture ── */
-  function previewImages(input, previewId) {
-    const preview = document.getElementById(previewId);
-    preview.innerHTML = '';
-    receiptBase64 = [];
-    Array.from(input.files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        const img = document.createElement('img');
-        img.src = e.target.result;
-        preview.appendChild(img);
-        receiptBase64.push(e.target.result);
-      };
-      reader.readAsDataURL(file);
-    });
   }
 
   /* ── Helpers ── */
@@ -461,40 +450,23 @@
 
   /* ── LINE LIFF Init ── */
   window.addEventListener('DOMContentLoaded', async () => {
-    // Show receipt field only when receipt tab is selected (hidden by default)
-    const receiptField = document.getElementById('field-receipt-img');
-    if (receiptField) receiptField.style.display = 'none';
-
     try {
       await liff.init({ liffId: CONFIG.LIFF_ID });
-
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
-      }
+      if (!liff.isLoggedIn()) { liff.login(); return; }
 
       lineProfile = await liff.getProfile();
-
-      // Update user card
       document.getElementById('lineName').textContent = lineProfile.displayName;
       document.getElementById('lineUid').textContent  = lineProfile.userId;
+      document.getElementById('fLineName').value      = lineProfile.displayName;
+      document.getElementById('fLineUid').value       = lineProfile.userId;
 
-      // Update form hidden/readonly fields
-      document.getElementById('fLineName').value = lineProfile.displayName;
-      document.getElementById('fLineUid').value  = lineProfile.userId;
-
-      // Update avatar if picture exists
       const avatar = document.querySelector('.user-avatar');
       if (avatar && lineProfile.pictureUrl) {
         avatar.innerHTML = `<img src="${lineProfile.pictureUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />`;
       }
-
-      // Check if already registered
       await checkExisting(lineProfile.userId);
-
     } catch (err) {
       console.error('LIFF init error:', err);
-      // Show form anyway for testing outside LINE
       document.getElementById('lineName').textContent = 'กรุณาเปิดใน LINE';
       document.getElementById('lineUid').textContent  = '—';
     }
@@ -503,16 +475,13 @@
   /* ── Check existing member ── */
   async function checkExisting(uid) {
     try {
-      const res = await fetch(`${CONFIG.GAS_URL}?action=check&uid=${uid}`);
+      const res  = await fetch(`${CONFIG.GAS_URL}?action=check&uid=${uid}`);
       const data = await res.json();
       if (data.exists && data.data) {
-        // Pre-fill form
         if (data.data.phone)     document.getElementById('fPhone').value    = data.data.phone;
         if (data.data.full_name) document.getElementById('fFullname').value = data.data.full_name;
         if (data.data.province)  document.getElementById('fProvince').value = data.data.province;
         if (data.data.note)      document.getElementById('fNote').value     = data.data.note;
-
-        // Show already-member badge
         const form = document.getElementById('mainForm');
         if (form) {
           const badge = document.createElement('div');
@@ -520,8 +489,6 @@
           badge.textContent = '⚡ คุณเคยลงทะเบียนแล้ว — สามารถอัปเดตข้อมูลได้';
           form.insertBefore(badge, form.firstChild);
         }
-
-        // Update submit button text
         const btn = document.querySelector('.submit-btn');
         if (btn) btn.textContent = '✏️ อัปเดตข้อมูลการรับประกัน';
       }
@@ -531,13 +498,12 @@
   /* ── Submit → POST to GAS ── */
   async function submitForm() {
     let valid = true;
-
     if (!val('fPhone'))    { setError('field-phone', true);    valid = false; } else setError('field-phone', false);
     if (!val('fFullname')) { setError('field-fullname', true); valid = false; } else setError('field-fullname', false);
     if (!val('fOrderId'))  { setError('field-orderid', true);  valid = false; } else setError('field-orderid', false);
 
     const checkedPets = document.querySelectorAll('input[name="pet"]:checked');
-    const otherCb = document.getElementById('petOtherCheckbox');
+    const otherCb     = document.getElementById('petOtherCheckbox');
     const otherFilled = !otherCb?.checked || (document.getElementById('fPetOther')?.value || '').trim() !== '';
     if (checkedPets.length === 0 || !otherFilled) {
       document.getElementById('field-pet').classList.add('has-error');
@@ -550,7 +516,6 @@
       document.getElementById('field-pet').classList.remove('has-error');
       document.getElementById('petError').style.display = 'none';
     }
-
     if (!val('fProvince')) { setError('field-province', true); valid = false; } else setError('field-province', false);
 
     if (!valid) {
@@ -559,60 +524,48 @@
       return;
     }
 
-    // Disable button + show loading
     const btn = document.querySelector('.submit-btn');
-    btn.disabled = true;
+    btn.disabled    = true;
     btn.textContent = '⏳ กำลังบันทึก...';
 
-    const petStr = Array.from(checkedPets).map(c => {
+    const petStr  = Array.from(checkedPets).map(c => {
       if (c.value === 'other') {
-        const otherText = (document.getElementById('fPetOther')?.value || '').trim();
-        return otherText ? 'อื่นๆ (' + otherText + ')' : 'อื่นๆ';
+        const ot = (document.getElementById('fPetOther')?.value || '').trim();
+        return ot ? 'อื่นๆ (' + ot + ')' : 'อื่นๆ';
       }
       return c.value;
     }).join(', ');
     const orderId = val('fOrderId');
 
     const payload = {
-      /* ── ฟิลด์ใหม่ (warranty) ── */
       action:       'register_warranty',
       full_name:    val('fFullname'),
       order_type:   currentOrderType,
       order_id:     orderId,
       pet_types:    petStr,
-
-      /* ── Backward-compatible กับ GAS เดิม ── */
       line_uid:     lineProfile ? lineProfile.userId      : val('fLineUid'),
       line_name:    lineProfile ? lineProfile.displayName : val('fLineName'),
       line_picture: lineProfile ? (lineProfile.pictureUrl || '') : '',
       phone:        val('fPhone'),
-      pet_type:     petStr,          // GAS เดิมใช้ชื่อนี้
+      pet_type:     petStr,
       province:     val('fProvince'),
       note:         val('fNote'),
       timestamp:    new Date().toISOString(),
-
-      /* ── Legacy order fields (GAS เดิมบันทึกแยก platform) ── */
-      order_shopee: currentOrderType === 'shopee'                              ? orderId : '',
-      order_lazada: currentOrderType === 'lazada'                              ? orderId : '',
-      order_tiktok: currentOrderType === 'tiktok'                              ? orderId : '',
-      order_pos:    ['homepro','makropro','receipt'].includes(currentOrderType) ? orderId : '',
+      order_shopee: currentOrderType === 'shopee'                               ? orderId : '',
+      order_lazada: currentOrderType === 'lazada'                               ? orderId : '',
+      order_tiktok: currentOrderType === 'tiktok'                               ? orderId : '',
+      order_pos:    ['homepro','makropro','receipt'].includes(currentOrderType)  ? orderId : '',
     };
 
-    // Include receipt image if any (limit to 1 image to avoid payload size issue)
-    if (receiptBase64.length > 0) {
-      payload.receipt_image = receiptBase64[0];
-    }
-
     try {
-      const res = await fetch(CONFIG.GAS_URL, {
+      const res  = await fetch(CONFIG.GAS_URL, {
         method:  'POST',
         headers: { 'Content-Type': 'text/plain' },   // ← CORS fix for iOS Safari
         body:    JSON.stringify(payload),
       });
       const data = await res.json();
-
       if (data.status === 'ok') {
-        document.getElementById('mainForm').style.display   = 'none';
+        document.getElementById('mainForm').style.display = 'none';
         document.getElementById('successScreen').classList.add('visible');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setTimeout(() => { try { if (liff.isInClient()) liff.closeWindow(); } catch(e){} }, 3000);
@@ -621,7 +574,7 @@
       }
     } catch (err) {
       alert('ไม่สามารถบันทึกได้: ' + err.message);
-      btn.disabled = false;
+      btn.disabled    = false;
       btn.textContent = '🐾 ลงทะเบียนรับประกันสินค้า';
     }
   }
@@ -634,7 +587,7 @@
       var wrap = document.getElementById('petOtherInputWrap');
       wrap.classList.toggle('visible', this.checked);
       if (this.checked) document.getElementById('fPetOther').focus();
-      else document.getElementById('fPetOther').value = '';
+      else              document.getElementById('fPetOther').value = '';
     });
   })();
 </script>

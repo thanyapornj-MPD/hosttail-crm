@@ -11,7 +11,7 @@
     body {
       font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
       background: linear-gradient(135deg, #fff8f0 0%, #fff3e8 100%);
-      min-height: 100vh;h
+      min-height: 100vh;
       color: #2d2d2d;
     }
 
@@ -381,7 +381,8 @@
 
   <div class="field">
     <label>💬 หมายเหตุ / ข้อความถึงร้าน <span style="font-size:0.75rem;color:#888;font-weight:400">(ไม่บังคับ)</span></label>
-100vh;  </div>
+    <textarea id="fNote" placeholder="ข้อความเพิ่มเติม หรือปัญหาที่พบ..."></textarea>
+  </div>
 
   <button class="submit-btn" onclick="submitForm()">🐾 ลงทะเบียนรับประกันสินค้า</button>
   <div class="privacy-note">
@@ -408,7 +409,7 @@
   ───────────────────────────────────────── */
   const CONFIG = {
     LIFF_ID: "2010446478-ZHkvLlTS",
-    GAS_URL: "https://script.google.com/macros/s/AKfycbyZtYijIaLicG4fWy5mGMgPSPxoySx_nZVQ5WB8aFZasX_ZAFFKQklzTDPFX59dZH_S_w/exec",
+    GAS_URL: "https://script.google.com/macros/s/AKfycbzmzW0v4jTSftpJPJws1ETGdsD880aXM2HIgjdjg51AQf2zPGJsF9vkOsn4gCpMe6zqCA/exec",
   };
 
   let lineProfile  = null;
@@ -536,13 +537,18 @@
     }).join(', ');
     const orderId = val('fOrderId');
 
+    // ใช้ composite key (UID_orderID) เพื่อให้แต่ละ order ขึ้น row ใหม่เสมอ
+    const realUid   = lineProfile ? lineProfile.userId : val('fLineUid');
+    const submitKey = realUid + '_' + (orderId || Date.now());
+
     const payload = {
       action:       'register_warranty',
       full_name:    val('fFullname'),
       order_type:   currentOrderType,
       order_id:     orderId,
       pet_types:    petStr,
-      line_uid:     lineProfile ? lineProfile.userId      : val('fLineUid'),
+      line_uid:     submitKey,       // composite key → สร้าง row ใหม่ทุกครั้ง
+      line_uid_real: realUid,        // real LINE UID สำหรับ notification
       line_name:    lineProfile ? lineProfile.displayName : val('fLineName'),
       line_picture: lineProfile ? (lineProfile.pictureUrl || '') : '',
       phone:        val('fPhone'),

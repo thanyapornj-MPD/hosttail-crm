@@ -603,8 +603,8 @@
     }).join(', ');
     const orderId = val('fOrderId');
 
-    // เวลาไทย UTC+7
-    const thaiNow = new Date(Date.now() + 7 * 3600 * 1000).toISOString().replace('Z', '+07:00');
+    // เวลาไทย UTC+7 รูปแบบ "YYYY-MM-DD HH:mm:ss"
+    const thaiNow = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 19).replace('T', ' ');
 
     // ใช้ composite key (UID_orderID) เพื่อให้แต่ละ order ขึ้น row ใหม่เสมอ
     const realUid   = lineProfile ? lineProfile.userId : val('fLineUid');

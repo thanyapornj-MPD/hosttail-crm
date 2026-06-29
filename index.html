@@ -603,6 +603,9 @@
     }).join(', ');
     const orderId = val('fOrderId');
 
+    // เวลาไทย UTC+7
+    const thaiNow = new Date(Date.now() + 7 * 3600 * 1000).toISOString().replace('Z', '+07:00');
+
     // ใช้ composite key (UID_orderID) เพื่อให้แต่ละ order ขึ้น row ใหม่เสมอ
     const realUid   = lineProfile ? lineProfile.userId : val('fLineUid');
     const submitKey = realUid + '_' + (orderId || Date.now());
@@ -621,7 +624,7 @@
       pet_type:     petStr,
       province:     val('fProvince'),
       note:         val('fNote'),
-      timestamp:    new Date().toISOString(),
+      timestamp:    thaiNow,
       order_shopee: currentOrderType === 'shopee'                               ? orderId : '',
       order_lazada: currentOrderType === 'lazada'                               ? orderId : '',
       order_tiktok: currentOrderType === 'tiktok'                               ? orderId : '',

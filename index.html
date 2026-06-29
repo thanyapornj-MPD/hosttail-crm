@@ -412,8 +412,9 @@
     GAS_URL: "https://script.google.com/macros/s/AKfycbzmzW0v4jTSftpJPJws1ETGdsD880aXM2HIgjdjg51AQf2zPGJsF9vkOsn4gCpMe6zqCA/exec",
   };
 
-  let lineProfile  = null;
-  let receiptBase64 = [];
+  let lineProfile       = null;
+  let receiptBase64     = [];
+  let isReturningMember = false;
 
   /* ── Order type tabs ── */
   let currentOrderType = 'shopee';
@@ -478,19 +479,70 @@
       const res  = await fetch(`${CONFIG.GAS_URL}?action=check&uid=${uid}`);
       const data = await res.json();
       if (data.exists && data.data) {
-        if (data.data.phone)     document.getElementById('fPhone').value    = data.data.phone;
-        if (data.data.full_name) document.getElementById('fFullname').value = data.data.full_name;
-        if (data.data.province)  document.getElementById('fProvince').value = data.data.province;
-        if (data.data.note)      document.getElementById('fNote').value     = data.data.note;
+        isReturningMember = true;
+
+        /* ── Lock helper ── */
+        function lockInput(el) {
+          el.readOnly = true;
+          el.style.cssText = 'background:#f5f5f5;color:#555;cursor:not-allowed;border-color:#ddd;';
+        }
+
+        /* ── เบอร์โทร ── */
+        if (data.data.phone) {
+          const el = document.getElementById('fPhone');
+          el.value = data.data.phone; lockInput(el);
+        }
+        /* ── ชื่อ-นามสกุล ── */
+        if (data.data.full_name) {
+          const el = document.getElementById('fFullname');
+          el.value = data.data.full_name; lockInput(el);
+        }
+        /* ── จังหวัด ── */
+        if (data.data.province) {
+          const el = document.getElementById('fProvince');
+          el.value = data.data.province;
+          el.disabled = true;
+          el.style.cssText = 'background:#f5f5f5;color:#555;cursor:not-allowed;border-color:#ddd;';
+        }
+
+        /* ── สัตว์เลี้ยง: pre-check & lock ── */
+        if (data.data.pet_type) {
+          const stored = String(data.data.pet_type);
+          stored.split(', ').forEach(p => {
+            const t  = p.trim();
+            const cb = document.querySelector(`input[name="pet"][value="${t}"]`);
+            if (cb) cb.checked = true;
+            if (t.startsWith('อื่นๆ')) {
+              const otherCb = document.getElementById('petOtherCheckbox');
+              if (otherCb) otherCb.checked = true;
+              const m = t.match(/\((.+)\)/);
+              if (m) {
+                const oi = document.getElementById('fPetOther');
+                if (oi) { oi.value = m[1]; lockInput(oi); }
+                document.getElementById('petOtherInputWrap')?.classList.add('visible');
+              }
+            }
+          });
+          /* ล็อค visual ทุก checkbox */
+          document.querySelectorAll('input[name="pet"]').forEach(cb => {
+            cb.disabled = true;
+            const box = cb.closest('label')?.querySelector('.pet-box');
+            if (box) { box.style.opacity = '0.55'; box.style.cursor = 'not-allowed'; }
+          });
+        }
+
+        /* ── Badge แจ้งสมาชิกเดิม ── */
         const form = document.getElementById('mainForm');
         if (form) {
           const badge = document.createElement('div');
-          badge.style.cssText = 'background:#fff3e8;border:1.5px solid #ff6b35;border-radius:10px;padding:10px 14px;font-size:0.82rem;color:#ff6b35;margin-bottom:16px;font-weight:700;';
-          badge.textContent = '⚡ คุณเคยลงทะเบียนแล้ว — สามารถอัปเดตข้อมูลได้';
+          badge.style.cssText = 'background:#e8f4fd;border:1.5px solid #1976D2;border-radius:10px;padding:12px 16px;font-size:0.85rem;color:#1565C0;margin-bottom:16px;font-weight:700;line-height:1.5;';
+          badge.innerHTML = '✅ ยินดีต้อนรับกลับมา!<br/><span style="font-weight:400;font-size:0.8rem;">ข้อมูลส่วนตัวถูกบันทึกแล้ว — กรอกแค่ <strong>หมายเลขคำสั่งซื้อ</strong> ใหม่แล้วกดปุ่มด้านล่าง</span>';
           form.insertBefore(badge, form.firstChild);
         }
+
+        /* ── ปุ่ม ── */
         const btn = document.querySelector('.submit-btn');
-        if (btn) btn.textContent = '✏️ อัปเดตข้อมูลการรับประกัน';
+        if (btn) btn.textContent = '📦 บันทึกคำสั่งซื้อใหม่';
       }
     } catch (e) { /* ข้ามถ้า check ไม่ได้ */ }
   }
@@ -498,25 +550,39 @@
   /* ── Submit → POST to GAS ── */
   async function submitForm() {
     let valid = true;
-    if (!val('fPhone'))    { setError('field-phone', true);    valid = false; } else setError('field-phone', false);
-    if (!val('fFullname')) { setError('field-fullname', true); valid = false; } else setError('field-fullname', false);
+
+    /* สมาชิกใหม่: validate ทุกฟิลด์ / สมาชิกเดิม: validate แค่เลขคำสั่งซื้อ */
+    if (!isReturningMember) {
+      if (!val('fPhone'))    { setError('field-phone', true);    valid = false; } else setError('field-phone', false);
+      if (!val('fFullname')) { setError('field-fullname', true); valid = false; } else setError('field-fullname', false);
+    } else {
+      setError('field-phone', false);
+      setError('field-fullname', false);
+    }
+
     if (!val('fOrderId'))  { setError('field-orderid', true);  valid = false; } else setError('field-orderid', false);
 
     const checkedPets = document.querySelectorAll('input[name="pet"]:checked');
-    const otherCb     = document.getElementById('petOtherCheckbox');
-    const otherFilled = !otherCb?.checked || (document.getElementById('fPetOther')?.value || '').trim() !== '';
-    if (checkedPets.length === 0 || !otherFilled) {
-      document.getElementById('field-pet').classList.add('has-error');
-      document.getElementById('petError').style.display = 'block';
-      document.getElementById('petError').textContent = checkedPets.length === 0
-        ? 'กรุณาเลือกชนิดสัตว์เลี้ยงอย่างน้อย 1 ชนิด'
-        : 'กรุณาระบุชนิดสัตว์เลี้ยง (อื่นๆ)';
-      valid = false;
+    if (!isReturningMember) {
+      const otherCb     = document.getElementById('petOtherCheckbox');
+      const otherFilled = !otherCb?.checked || (document.getElementById('fPetOther')?.value || '').trim() !== '';
+      if (checkedPets.length === 0 || !otherFilled) {
+        document.getElementById('field-pet').classList.add('has-error');
+        document.getElementById('petError').style.display = 'block';
+        document.getElementById('petError').textContent = checkedPets.length === 0
+          ? 'กรุณาเลือกชนิดสัตว์เลี้ยงอย่างน้อย 1 ชนิด'
+          : 'กรุณาระบุชนิดสัตว์เลี้ยง (อื่นๆ)';
+        valid = false;
+      } else {
+        document.getElementById('field-pet').classList.remove('has-error');
+        document.getElementById('petError').style.display = 'none';
+      }
+      if (!val('fProvince')) { setError('field-province', true); valid = false; } else setError('field-province', false);
     } else {
       document.getElementById('field-pet').classList.remove('has-error');
       document.getElementById('petError').style.display = 'none';
+      setError('field-province', false);
     }
-    if (!val('fProvince')) { setError('field-province', true); valid = false; } else setError('field-province', false);
 
     if (!valid) {
       const firstErr = document.querySelector('.has-error');
@@ -580,7 +646,7 @@
     } catch (err) {
       alert('ไม่สามารถบันทึกได้: ' + err.message);
       btn.disabled    = false;
-      btn.textContent = '🐾 ลงทะเบียนรับประกันสินค้า';
+      btn.textContent = isReturningMember ? '📦 บันทึกคำสั่งซื้อใหม่' : '🐾 ลงทะเบียนรับประกันสินค้า';
     }
   }
 

@@ -216,6 +216,68 @@
     .field.has-error .field-error { display: block; }
     .divider { height: 1px; background: #f0f0f0; margin: 20px 0; }
 
+    /* ─── Terms Modal ─── */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.55); z-index: 9999;
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    .modal-box {
+      background: #fff; border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 480px; max-height: 85vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
+    }
+    .modal-header {
+      padding: 16px 20px 14px; font-weight: 700; font-size: 1rem; color: #2d2d2d;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-shrink: 0;
+    }
+    .modal-close {
+      background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #aaa; padding: 4px 8px;
+    }
+    .modal-body {
+      flex: 1; overflow-y: auto; padding: 16px 20px;
+      font-size: 0.8rem; line-height: 1.85; color: #444;
+      -webkit-overflow-scrolling: touch;
+    }
+    .modal-body h3 { font-size: 0.87rem; color: #ff6b35; margin: 14px 0 4px; font-weight: 700; }
+    .modal-body p  { margin: 0 0 7px; }
+    .modal-body ul { margin: 4px 0 8px; padding-left: 18px; }
+    .modal-body ul li { margin-bottom: 4px; }
+    .modal-footer {
+      padding: 12px 20px 20px; border-top: 1px solid #f0f0f0; flex-shrink: 0;
+    }
+    .modal-scroll-hint {
+      text-align: center; font-size: 0.72rem; color: #bbb; margin-bottom: 8px;
+    }
+    .accept-terms-btn {
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.3s;
+    }
+    .accept-terms-btn:disabled { background: #ddd; color: #999; cursor: not-allowed; }
+    .accept-terms-btn:not(:disabled) {
+      background: linear-gradient(135deg, #ff6b35, #ff4500); color: #fff;
+      box-shadow: 0 4px 14px rgba(255,107,53,0.3);
+    }
+    /* ─── Terms Checkbox Row ─── */
+    .terms-check-row {
+      display: flex; align-items: flex-start; gap: 12px; cursor: pointer;
+      padding: 13px 14px; background: #fff8f0;
+      border-radius: 12px; border: 1.5px solid #ffd5b8; transition: border-color 0.2s;
+    }
+    .terms-check-row:hover { border-color: #ff6b35; }
+    .terms-check-row.accepted { background: #fff3e8; border-color: #ff6b35; }
+    .terms-checkbox-box {
+      width: 22px; height: 22px; border: 2px solid #ff6b35; border-radius: 5px;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      background: #fff; font-size: 0.85rem; font-weight: 900; color: #fff;
+      margin-top: 2px; transition: background 0.2s;
+    }
+    .terms-checkbox-box.checked { background: #ff6b35; }
+    .terms-check-label { font-size: 0.84rem; color: #444; line-height: 1.5; }
+
     /* ─── Mobile tuning ─── */
     @media (max-width: 480px) {
       .header { padding: 22px 14px 18px; }
@@ -384,6 +446,19 @@
     <textarea id="fNote" placeholder="ข้อความเพิ่มเติม หรือปัญหาที่พบ..."></textarea>
   </div>
 
+  <!-- ✅ ยอมรับเงื่อนไขการรับประกัน -->
+  <div class="field" id="field-terms" style="margin-top:16px;">
+    <div class="terms-check-row" id="termsRow" onclick="openTermsModal()">
+      <div class="terms-checkbox-box" id="termsCheckboxBox"></div>
+      <div class="terms-check-label">
+        ฉันได้อ่านและยอมรับ<br/>
+        <span style="color:#ff6b35;font-weight:700;text-decoration:underline;">เงื่อนไขการรับประกันสินค้า (รับประกัน 12 เดือน)</span>
+        <span class="req"> *</span>
+      </div>
+    </div>
+    <div class="field-error" id="termsError">กรุณายอมรับเงื่อนไขการรับประกันสินค้า</div>
+  </div>
+
   <button class="submit-btn" onclick="submitForm()">🐾 ลงทะเบียนรับประกันสินค้า</button>
   <div class="privacy-note">
     ข้อมูลของคุณจะถูกเก็บเป็นความลับ<br/>และใช้เพื่อให้บริการลูกค้าเท่านั้น
@@ -415,6 +490,53 @@
   let lineProfile       = null;
   let receiptBase64     = [];
   let isReturningMember = false;
+  let termsAccepted     = false;
+
+  /* ─── Terms Modal ─── */
+  function openTermsModal() {
+    if (termsAccepted) {
+      /* ถ้ายอมรับแล้ว — กดอีกครั้ง = ยกเลิก */
+      termsAccepted = false;
+      document.getElementById('termsCheckboxBox').classList.remove('checked');
+      document.getElementById('termsCheckboxBox').textContent = '';
+      document.getElementById('termsRow').classList.remove('accepted');
+      return;
+    }
+    const overlay = document.getElementById('termsModal');
+    overlay.style.display = 'flex';
+    const body = document.getElementById('termsModalBody');
+    body.scrollTop = 0;
+    const btn = document.getElementById('acceptTermsBtn');
+    btn.disabled = true;
+    btn.textContent = '⬇ เลื่อนอ่านจนสุดแล้วกดยอมรับ';
+  }
+
+  function closeTermsModal() {
+    document.getElementById('termsModal').style.display = 'none';
+  }
+
+  function checkTermsScroll() {
+    const body = document.getElementById('termsModalBody');
+    const btn  = document.getElementById('acceptTermsBtn');
+    const hint = document.getElementById('scrollHint');
+    if (body.scrollHeight - body.scrollTop - body.clientHeight < 40) {
+      btn.disabled = false;
+      btn.textContent = '✅ ยอมรับเงื่อนไขการรับประกัน';
+      if (hint) hint.style.display = 'none';
+    }
+  }
+
+  function acceptTerms() {
+    termsAccepted = true;
+    const box = document.getElementById('termsCheckboxBox');
+    box.classList.add('checked');
+    box.textContent = '✓';
+    document.getElementById('termsRow').classList.add('accepted');
+    /* ล้าง error ถ้ามี */
+    document.getElementById('field-terms').classList.remove('has-error');
+    document.getElementById('termsError').style.display = 'none';
+    closeTermsModal();
+  }
 
   /* ── Order type tabs ── */
   let currentOrderType = 'shopee';
@@ -584,6 +706,16 @@
       setError('field-province', false);
     }
 
+    /* ─ terms ─ */
+    if (!termsAccepted) {
+      document.getElementById('field-terms').classList.add('has-error');
+      document.getElementById('termsError').style.display = 'block';
+      valid = false;
+    } else {
+      document.getElementById('field-terms').classList.remove('has-error');
+      document.getElementById('termsError').style.display = 'none';
+    }
+
     if (!valid) {
       const firstErr = document.querySelector('.has-error');
       if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -665,5 +797,70 @@
     });
   })();
 </script>
+
+<!-- ─── Terms & Conditions Modal ─── -->
+<div id="termsModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeTermsModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>📋 เงื่อนไขการรับประกันสินค้า</span>
+      <button class="modal-close" onclick="closeTermsModal()">✕</button>
+    </div>
+    <div class="modal-body" id="termsModalBody" onscroll="checkTermsScroll()">
+
+      <h3>เงื่อนไขการรับประกันสินค้า (รับประกัน 12 เดือน)</h3>
+
+      <h3>1. เงื่อนไขการรับประกันสินค้า 12 เดือน</h3>
+      <p><strong>1.1 สินค้าหมวด คอกกั้นสัตว์เลี้ยง / เฟอร์นิเจอร์สัตว์เลี้ยง</strong></p>
+      <p>1.1.1 7 วันหลังจากวันที่ได้รับสินค้า หากตรวจสอบแล้วพบว่าความเสียหายเกิดจากความบกพร่องในการผลิต หรือผิดพลาดจากโรงงานผู้ผลิต บริษัทฯ จะดำเนินการเปลี่ยนสินค้าใหม่ หรือซ่อมแซม โดยไม่มีค่าใช้จ่าย</p>
+      <p>1.1.2 ระยะเวลาการรับประกันสินค้า : 1–12 เดือน นับจากวันที่ลูกค้าได้รับสินค้า หากตรวจสอบแล้วพบว่าอะไหล่เกิดความเสียหายจากความบกพร่องในการผลิต หรือเกิดจากการใช้งานตามปกติ ภายใต้เงื่อนไขการรับประกัน บริษัทฯ จะดำเนินการเปลี่ยนอะไหล่ให้โดยไม่มีค่าใช้จ่าย ถ้าสินค้าเสียหายทั้งชิ้นไม่สามารถเปลี่ยนอะไหล่ได้จะต้องขึ้นอยู่กับการพิจารณาว่าอยู่ในเงื่อนไขการรับประกันหรือไม่ ให้เป็นดุลยพินิจของบริษัทฯ</p>
+
+      <p><strong>1.2 สินค้าหมวด Smart Product / เครื่องใช้ไฟฟ้า</strong></p>
+      <p>1.2.1 7 วันหลังจากวันที่ได้รับสินค้า หากตรวจสอบแล้วพบว่าความเสียหายเกิดจากความบกพร่องในการผลิต หรือผิดพลาดจากโรงงานผู้ผลิต บริษัทฯ จะดำเนินการซ่อมและเปลี่ยนอะไหล่ให้ฟรี โดยไม่คิดมูลค่าภายในระยะเวลา 7 วัน นับจากวันที่ได้รับสินค้า</p>
+      <p>1.2.2 ระยะเวลาการรับประกันสินค้า : 1–12 เดือน นับจากวันที่ลูกค้าได้รับสินค้า หากสินค้าเกิดความเสียหาย ผิดพลาดที่ระบบตัวเครื่อง เช่น ระบบมีการแจ้งเตือน Error / เปิดไม่ติด / มอเตอร์ไม่ทำงาน / เซนเซอร์ผิดปกติ / ระบบอัตโนมัติไม่ทำงาน / แผงวงจรเสีย / หน้าจอไม่แสดงผล และตรวจสอบแล้วพบว่าความเสียหายเกิดจากความบกพร่องในการผลิต บริษัทฯ จะดำเนินการเปลี่ยนอะไหล่ให้โดยไม่มีค่าใช้จ่าย ถ้าสินค้าเสียหายทั้งชิ้นไม่สามารถเปลี่ยนอะไหล่ได้จะต้องขึ้นอยู่กับการพิจารณาของบริษัทฯ</p>
+
+      <h3>2. การรับประกันนี้ไม่ครอบคลุมกรณีต่อไปนี้</h3>
+      <ul>
+        <li>2.1 ลูกค้าที่ไม่ได้ลงทะเบียน หรือจงใจกรอกข้อมูลเท็จ หรือลงทะเบียนล่าช้าไม่ตรงกับที่ใช้งานจริง ทางบริษัทฯ ขอสงวนสิทธิ์ไม่ประกันสินค้าในทุกกรณี</li>
+        <li>2.2 หากมีร่องรอยการซ่อม ดัดแปลง แก้ไขผลิตภัณฑ์ หรือแกะชิ้นส่วน ทำให้สินค้าเกิดความเสียหาย ทางบริษัทฯ ขอสงวนสิทธิ์ไม่รับเคลมสินค้า</li>
+        <li>2.3 เหตุเกิดจากการใช้สินค้าผิดประเภท การเกิดอุบัติเหตุ ตกกระแทก การขนย้ายที่ไม่ถูกต้อง หรือความประมาทเกี่ยวกับการใช้งานสินค้า และภัยธรรมชาติ ฯลฯ</li>
+        <li>2.4 เหตุเกิดจากการใช้งานผิดวัตถุประสงค์ และไม่ปฏิบัติตามคำแนะนำในคู่มือการใช้งาน หรือวิธีการดูแลสินค้าที่ทางบริษัทฯ แจ้งไว้</li>
+        <li>2.5 สินค้าเสื่อมสภาพตามการใช้งาน สัตว์เลี้ยงกัด แทะ ข่วน ทำให้ชิ้นส่วนเสียหาย หรือการหมดอายุขัยของชิ้นส่วนอะไหล่จากการใช้งานตามปกติ</li>
+        <li>2.6 สินค้าหมวด Smart Product และเครื่องใช้ไฟฟ้า หากความเสียหายเกิดขึ้นจากของเหลว ความชื้น หรือการจัดเก็บในบริเวณที่ไม่เหมาะสม เช่น อุณหภูมิสูงเกินไป ทางบริษัทฯ ขอสงวนสิทธิ์ไม่ประกันสินค้าในทุกกรณี</li>
+        <li>2.7 สินค้าหมวด Smart Product และเครื่องใช้ไฟฟ้า หากเกิดจากระบบไฟฟ้าของทางผู้ซื้อ ฟ้าผ่า กระแสไฟกระชาก ไม่เสถียร การใช้อะแดปเตอร์หรือสายไฟที่ไม่ได้มาตรฐาน ส่งผลให้สินค้าเสียหาย ทางบริษัทฯ ขอสงวนสิทธิ์ไม่ประกันสินค้าในทุกกรณี</li>
+        <li>2.8 อุปกรณ์เสริม หรืออุปกรณ์สิ้นเปลืองที่แถมไปกับตัวสินค้า เช่น ถุงรองขยะ แผ่นกรองกลิ่น ยางซีลตัวเครื่อง อะไหล่ที่เสื่อมสภาพตามการใช้งาน</li>
+      </ul>
+
+      <h3>3. การยกเลิกการรับประกัน</h3>
+      <p>บริษัทฯ จะยกเลิกการรับประกันทันที เมื่อลูกค้าแจ้งข้อมูลการรับประกันที่เป็นเท็จ หรือเมื่อนำอะไหล่ที่ชำรุดกลับมาตรวจสอบแล้วไม่ตรงกับการใช้งานที่ลูกค้าแจ้ง และไม่เข้าเงื่อนไขในการรับประกันสินค้า</p>
+
+      <h3>4. ระยะเวลาการตรวจสอบ</h3>
+      <p>ในกรณีที่มีการเคลมสินค้าเกิดขึ้น บริษัทฯ จะใช้เวลาตรวจสอบสินค้า 7–14 วันทำการ หลังจากได้รับสินค้า สินค้าที่ผ่านการใช้งานแล้ว บริษัทฯ ขอสงวนสิทธิ์ไม่คืนเงินทุกกรณี</p>
+
+      <h3>5. สิทธิ์ของบริษัท</h3>
+      <p>บริษัทฯ ขอสงวนสิทธิ์ในการซ่อม เปลี่ยนอะไหล่ หรือเปลี่ยนสินค้าใหม่ โดยการพิจารณาของบริษัทฯ ถือเป็นที่สิ้นสุด</p>
+
+      <h3>6. การโอนสิทธิ์</h3>
+      <p>การรับประกันสินค้าจะครอบคลุมสิทธิ์เฉพาะกับผู้ที่ลงทะเบียนไว้เท่านั้น ไม่สามารถโอนย้ายสิทธิ์การรับประกันให้ผู้อื่นได้ ถ้ามีการขายสินค้าต่อให้กับผู้อื่นจะไม่รับรองการเคลมสินค้าของเจ้าของมือที่สองในทุกกรณี</p>
+
+      <h3>ขั้นตอนการส่งเคลมสินค้า</h3>
+      <ul>
+        <li>1. ติดต่อยื่นเรื่องการรับประกัน และส่งเคลมสินค้า ผ่านทาง LINE Official Account</li>
+        <li>2. แจ้ง ชื่อ–นามสกุล หรือเบอร์ติดต่อที่ลงทะเบียน</li>
+        <li>3. ส่งรูปสินค้า และวิดีโอสินค้าที่มีอาการเสีย หรือมีปัญหา</li>
+        <li>4. รอเจ้าหน้าที่ตรวจสอบการรับประกันและแจ้งผลการพิจารณาการเคลม เพื่อให้ทางผู้ซื้อจัดส่งสินค้าเข้าตรวจสอบ (หากจำเป็น) เพื่อซ่อม / เปลี่ยนอะไหล่ / เปลี่ยนสินค้า</li>
+        <li>5. ทางบริษัทฯ ใช้ระยะเวลา 7–14 วัน ในการตรวจสอบสินค้าที่ได้รับ เพื่อดำเนินการในขั้นต่อไป</li>
+        <li>6. หลังจากทางบริษัทฯ ดำเนินการเรียบร้อยแล้ว จะดำเนินการส่งสินค้ากลับคืนให้กับผู้ซื้อ</li>
+      </ul>
+
+    </div>
+    <div class="modal-footer">
+      <div class="modal-scroll-hint" id="scrollHint">⬇ เลื่อนลงเพื่ออ่านจนครบ</div>
+      <button id="acceptTermsBtn" class="accept-terms-btn" disabled onclick="acceptTerms()">
+        ⬇ เลื่อนอ่านจนสุดแล้วกดยอมรับ
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
